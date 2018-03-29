@@ -13,11 +13,20 @@ namespace BasicAuth {
 
 static const std::string PREFIX{"Basic "};
 static const std::string UNAUTHORIZED{"unauthorized"};
+static const Http::LowerCaseString WWW_AUTHENTICATE{"WWW-Authenticate"};
 
 Http::FilterHeadersStatus BasicAuthFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
   if (!authenticated(headers)) {
-    Http::Utility::sendLocalReply(*decoder_callbacks_, false, Http::Code::Unauthorized,
-                                  UNAUTHORIZED);
+    Http::Utility::sendLocalReply(
+      [&](Http::HeaderMapPtr&& headers, bool end_stream) -> void {
+        // TODO(dio): add an entry to the response header:  WWW-Authenticate: Basic realm="envoy world"
+        headers->addReferenceKey(WWW_AUTHENTICATE, "Basic realm=\"envoy world\"");
+        decoder_callbacks_->encodeHeaders(std::move(headers), end_stream);
+      },
+      [&](Buffer::Instance& data, bool end_stream) -> void {
+        decoder_callbacks_->encodeData(data, end_stream);
+      },
+      false, Http::Code::Unauthorized, UNAUTHORIZED);
     return Http::FilterHeadersStatus::StopIteration;
   }
   return Http::FilterHeadersStatus::Continue;

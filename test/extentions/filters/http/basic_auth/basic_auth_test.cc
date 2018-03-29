@@ -15,41 +15,34 @@ protected:
     filter_->setDecoderFilterCallbacks(callbacks_);
   }
 
+  void testUnauthorizedRequest(Http::TestHeaderMapImpl&& request_headers) {
+    Http::TestHeaderMapImpl response_headers{{":status", "401"},
+                                             {"content-length", "12"},
+                                             {"content-type", "text/plain"},
+                                             {"www-authenticate", "Basic realm=\"envoy world\""}};
+    EXPECT_CALL(callbacks_, encodeHeaders_(HeaderMapEqualRef(&response_headers), false)).Times(1);
+    EXPECT_CALL(callbacks_, encodeData(testing::_, true)).Times(1);
+
+    EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
+              filter_->decodeHeaders(request_headers, false));
+  }
+
   testing::NiceMock<Http::MockStreamDecoderFilterCallbacks> callbacks_;
   std::unique_ptr<BasicAuthFilter> filter_;
 };
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithoutAuthorizationHeader) {
-  Http::TestHeaderMapImpl response_headers{
-      {":status", "401"}, {"content-length", "12"}, {"content-type", "text/plain"}};
-  EXPECT_CALL(callbacks_, encodeHeaders_(HeaderMapEqualRef(&response_headers), false)).Times(1);
-  EXPECT_CALL(callbacks_, encodeData(testing::_, true)).Times(1);
-
-  Http::TestHeaderMapImpl request_headers{{":method", "get"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+  testUnauthorizedRequest(Http::TestHeaderMapImpl{{":method", "get"}});
 }
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithInvalidAuthorizationPrefix) {
-  Http::TestHeaderMapImpl response_headers{
-      {":status", "401"}, {"content-length", "12"}, {"content-type", "text/plain"}};
-  EXPECT_CALL(callbacks_, encodeHeaders_(HeaderMapEqualRef(&response_headers), false)).Times(1);
-  EXPECT_CALL(callbacks_, encodeData(testing::_, true)).Times(1);
-
-  Http::TestHeaderMapImpl request_headers{{":method", "get"}, {"authorization", "Advance ZW52b3k6YXdlc29tZQ=="}};
-  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+  testUnauthorizedRequest(Http::TestHeaderMapImpl{{":method", "get"},
+                                                {"authorization", "Advance ZW52b3k6YXdlc29tZQ=="}});
 }
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithInvalidAuthorizationValue) {
-  Http::TestHeaderMapImpl response_headers{
-      {":status", "401"}, {"content-length", "12"}, {"content-type", "text/plain"}};
-  EXPECT_CALL(callbacks_, encodeHeaders_(HeaderMapEqualRef(&response_headers), false)).Times(1);
-  EXPECT_CALL(callbacks_, encodeData(testing::_, true)).Times(1);
-
-  Http::TestHeaderMapImpl request_headers{{":method", "get"}, {"authorization", "Basic INVALID"}};
-  EXPECT_EQ(Http::FilterHeadersStatus::StopIteration,
-            filter_->decodeHeaders(request_headers, false));
+  testUnauthorizedRequest(
+      Http::TestHeaderMapImpl{{":method", "get"}, {"authorization", "Basic INVALID"}});
 }
 
 TEST_F(BasicAuthFilterTest, AuthorizedRequest) {
