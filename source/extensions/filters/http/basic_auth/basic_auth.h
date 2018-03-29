@@ -28,6 +28,8 @@ public:
   }
 
 private:
+  bool authenticated(const Http::HeaderMap&);
+
   Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
 };
 
