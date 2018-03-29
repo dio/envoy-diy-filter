@@ -23,12 +23,12 @@ public:
   Http::FilterTrailersStatus decodeTrailers(Http::HeaderMap&) override {
     return Http::FilterTrailersStatus::Continue;
   }
-  void setDecoderFilterCallbacks(Http::StreamDecoderFilterCallbacks& callback) override {
-    decoder_callbacks_ = &callback;
+  void setDecoderFilterCallbacks(Http::StreamDecoderFilterCallbacks& callbacks) override {
+    callbacks_ = &callbacks;
   }
 
 private:
-  Http::StreamDecoderFilterCallbacks* decoder_callbacks_;
+  Http::StreamDecoderFilterCallbacks* callbacks_;
 };
 
 } // namespace BasicAuth
