@@ -17,14 +17,14 @@ static const Http::LowerCaseString WWW_AUTHENTICATE{"WWW-Authenticate"};
 Http::FilterHeadersStatus BasicAuthFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
   if (!authenticated(headers)) {
     Http::Utility::sendLocalReply(
-      [&](Http::HeaderMapPtr&& headers, bool end_stream) -> void {
-        headers->addReferenceKey(WWW_AUTHENTICATE, config_->realm_);
-        decoder_callbacks_->encodeHeaders(std::move(headers), end_stream);
-      },
-      [&](Buffer::Instance& data, bool end_stream) -> void {
-        decoder_callbacks_->encodeData(data, end_stream);
-      },
-      false, Http::Code::Unauthorized, UNAUTHORIZED);
+        [&](Http::HeaderMapPtr&& headers, bool end_stream) -> void {
+          headers->addReferenceKey(WWW_AUTHENTICATE, config_->realm_);
+          decoder_callbacks_->encodeHeaders(std::move(headers), end_stream);
+        },
+        [&](Buffer::Instance& data, bool end_stream) -> void {
+          decoder_callbacks_->encodeData(data, end_stream);
+        },
+        false, Http::Code::Unauthorized, UNAUTHORIZED);
     return Http::FilterHeadersStatus::StopIteration;
   }
   return Http::FilterHeadersStatus::Continue;

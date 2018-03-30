@@ -36,8 +36,8 @@ TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithoutAuthorizationHeader) {
 }
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithInvalidAuthorizationPrefix) {
-  testUnauthorizedRequest(Http::TestHeaderMapImpl{{":method", "get"},
-                                                {"authorization", "Advance ZW52b3k6YXdlc29tZQ=="}});
+  testUnauthorizedRequest(Http::TestHeaderMapImpl{
+      {":method", "get"}, {"authorization", "Advance ZW52b3k6YXdlc29tZQ=="}});
 }
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithInvalidAuthorizationValue) {
