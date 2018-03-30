@@ -12,15 +12,13 @@ namespace HttpFilters {
 namespace BasicAuth {
 
 static const std::string PREFIX{"Basic "};
-static const std::string UNAUTHORIZED{"unauthorized"};
 static const Http::LowerCaseString WWW_AUTHENTICATE{"WWW-Authenticate"};
 
 Http::FilterHeadersStatus BasicAuthFilter::decodeHeaders(Http::HeaderMap& headers, bool) {
   if (!authenticated(headers)) {
     Http::Utility::sendLocalReply(
       [&](Http::HeaderMapPtr&& headers, bool end_stream) -> void {
-        // TODO(dio): add an entry to the response header:  WWW-Authenticate: Basic realm="envoy world"
-        headers->addReferenceKey(WWW_AUTHENTICATE, "Basic realm=\"envoy world\"");
+        headers->addReferenceKey(WWW_AUTHENTICATE, config_->realm_);
         decoder_callbacks_->encodeHeaders(std::move(headers), end_stream);
       },
       [&](Buffer::Instance& data, bool end_stream) -> void {
@@ -43,10 +41,7 @@ bool BasicAuthFilter::authenticated(const Http::HeaderMap& headers) {
   }
 
   absl::string_view encoded(value.substr(PREFIX.size(), value.size() - PREFIX.size()));
-
-  // TODO(dio): Put username:password in configuration, once we have it.
-  absl::string_view computed(Base64::encode("envoy:awesome", 13));
-  return encoded.size() == computed.size() && absl::StartsWith(encoded, computed);
+  return config_->encoded_.size() == encoded.size() && absl::StartsWith(config_->encoded_, encoded);
 }
 
 } // namespace BasicAuth

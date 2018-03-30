@@ -8,4 +8,5 @@ message BasicAuth {
     string realm = 1 [(validate.rules).string.min_bytes = 1];
     string username = 2;
     string password = 3;
+    string message = 4;
 }

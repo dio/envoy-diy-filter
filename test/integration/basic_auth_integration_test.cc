@@ -12,7 +12,13 @@ public:
   void SetUp() override { initialize(); }
 
   void initialize() override {
-    config_helper_.addFilter("name: basic_auth");
+    config_helper_.addFilter(R"EOF(
+    name: diy.basic_auth
+    config:
+      realm: envoy world
+      username: envoy
+      password: awesome
+    )EOF");
     HttpIntegrationTest::initialize();
   }
 
