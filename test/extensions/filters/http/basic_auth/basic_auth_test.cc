@@ -11,7 +11,17 @@ namespace BasicAuth {
 class BasicAuthFilterTest : public testing::Test {
 protected:
   void SetUp() override {
-    filter_.reset(new BasicAuthFilter());
+    // TODO(dio): move this to an separate function.
+    const std::string yaml = R"EOF(
+      username: envoy
+      password: awesome
+      realm: envoy world
+    )EOF";
+    diy::BasicAuth proto_config;
+    MessageUtil::loadFromYaml(yaml, proto_config);
+
+    config_.reset(new BasicAuthFilterConfig(proto_config));
+    filter_.reset(new BasicAuthFilter(config_));
     filter_->setDecoderFilterCallbacks(callbacks_);
   }
 
@@ -29,6 +39,7 @@ protected:
 
   testing::NiceMock<Http::MockStreamDecoderFilterCallbacks> callbacks_;
   std::unique_ptr<BasicAuthFilter> filter_;
+  BasicAuthFilterConfigPtr config_;
 };
 
 TEST_F(BasicAuthFilterTest, UnauthorizedRequestWithoutAuthorizationHeader) {
