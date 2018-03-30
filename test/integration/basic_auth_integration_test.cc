@@ -50,7 +50,7 @@ protected:
 INSTANTIATE_TEST_CASE_P(IpVersions, BasicAuthFilterIntegrationTest,
                         testing::ValuesIn(TestEnvironment::getIpVersionsForTest()));
 
-TEST_P(BasicAuthFilterIntegrationTest, Test1) {
+TEST_P(BasicAuthFilterIntegrationTest, MissingAuthorizationHeader) {
   testRequest(
       Http::TestHeaderMapImpl{{":method", "GET"}, {":path", "/path"}, {":authority", "host"}},
       Http::TestHeaderMapImpl{{"content-length", "12"},
@@ -60,7 +60,31 @@ TEST_P(BasicAuthFilterIntegrationTest, Test1) {
                               {":status", "401"}});
 }
 
-TEST_P(BasicAuthFilterIntegrationTest, Test2) {
+TEST_P(BasicAuthFilterIntegrationTest, InvalidAuthorizationHeaderPrefix) {
+  testRequest(Http::TestHeaderMapImpl{{":method", "GET"},
+                                      {":path", "/path"},
+                                      {":authority", "host"},
+                                      {"authorization", "Advance ZW52b3k6YXdlc29tZQ=="}},
+              Http::TestHeaderMapImpl{{"content-length", "12"},
+                                      {"content-type", "text/plain"},
+                                      {"www-authenticate", "Basic realm=\"envoy world\""},
+                                      {"server", "envoy"},
+                                      {":status", "401"}});
+}
+
+TEST_P(BasicAuthFilterIntegrationTest, InvalidAuthorizationHeaderValue) {
+  testRequest(Http::TestHeaderMapImpl{{":method", "GET"},
+                                      {":path", "/path"},
+                                      {":authority", "host"},
+                                      {"authorization", "Basic INVALID"}},
+              Http::TestHeaderMapImpl{{"content-length", "12"},
+                                      {"content-type", "text/plain"},
+                                      {"www-authenticate", "Basic realm=\"envoy world\""},
+                                      {"server", "envoy"},
+                                      {":status", "401"}});
+}
+
+TEST_P(BasicAuthFilterIntegrationTest, Authorized) {
   testRequest(
       Http::TestHeaderMapImpl{{":method", "GET"},
                               {":path", "/path"},
